@@ -1,13 +1,13 @@
 ---
-import { Card, CardGrid } from "@astrojs/starlight/components";
+import EventCards from './EventCards.jsx';  // Adjusted path to EventCards.jsx
 import { getCollection } from "astro:content";
 
-// Fetch all the events (without filtering based on date)
+// Fetch all the events (similar to your previous code)
 const lectures = (await getCollection("docs", (entry) => entry.id.startsWith("lecture"))).map(entry => ({
   slug: entry.slug,
   type: "lecture",
   title: entry.data.title,
-  date: entry.data.date, // Keep raw date format to handle on client-side
+  date: entry.data.date, // Keep raw date format
   readings: entry.data.readings,
   notes: entry.data.notes,
 }));
@@ -15,7 +15,7 @@ const lectures = (await getCollection("docs", (entry) => entry.id.startsWith("le
 const exams = (await getCollection("exams")).map(entry => ({
   type: "exam",
   title: entry.data.title,
-  date: entry.data.date, // Keep raw date format to handle on client-side
+  date: entry.data.date,
   content: entry.data.content,
   notes: entry.data.notes,
 }));
@@ -26,104 +26,14 @@ const assignments = (await getCollection("docs", (entry) => entry.id.startsWith(
     type: "homework release",
     title: entry.data.title,
     description: entry.data.description,
-    release: entry.data.release, // Keep raw date format to handle on client-side
-    due: entry.data.due, // Keep raw date format to handle on client-side
+    release: entry.data.release,
+    due: entry.data.due,
     notes: entry.data.notes,
   },
 ]);
 
-// Pass all data to the client-side script
-const allEvents = { lectures, exams, assignments };
+const allEvents = { lectures, exams, assignments }; // Combine all events
 ---
 
-<CardGrid>
-  <!-- Lecture card -->
-  <Card title="Upcoming Lecture" icon="pencil">
-    <div class="lecture-item">
-      <p>Loading upcoming lectures...</p>
-    </div>
-  </Card>
-
-  <!-- Assignment card -->
-  <Card title="Upcoming Assignment" icon="laptop">
-    <div class="assignment-item">
-      <p>Loading upcoming assignments...</p>
-    </div>
-  </Card>
-
-  <!-- Exam card -->
-  <Card title="Upcoming Exam" icon="open-book">
-    <div class="exam-item">
-      <p>Loading upcoming exams...</p>
-    </div>
-  </Card>
-
-  <Card title="Explore Lecture Content" icon="document">
-    Take a look at the lecture notes, slides, and course videos.
-  </Card>
-</CardGrid>
-
-<!-- Pass the event data to the client-side script -->
-<script type="application/json" id="event-data">
-  {JSON.stringify(allEvents)}
-</script>
-
-<!-- Client-side script to dynamically update the events -->
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const currentDate = new Date();
-    
-    // Get the event data from the script tag
-    const eventData = JSON.parse(document.getElementById('event-data').textContent);
-    
-    // Helper function to filter upcoming events based on current date
-    const filterUpcomingEvents = (events, key) => {
-      return events.filter(event => new Date(event[key]) >= currentDate)
-                   .sort((a, b) => new Date(a[key]) - new Date(b[key]));
-    };
-    
-    // Filter and display upcoming lectures
-    const upcomingLectures = filterUpcomingEvents(eventData.lectures, 'date');
-    const lectureContainer = document.querySelector('.lecture-item');
-    if (upcomingLectures.length > 0) {
-      lectureContainer.innerHTML = `
-        The next lecture will cover: ${upcomingLectures[0].title}.
-        <div>Date: ${new Date(upcomingLectures[0].date).toLocaleDateString()}</div>
-        <div>
-          <strong>Readings:</strong>
-          <ul>
-            ${upcomingLectures[0].readings.map(reading => `
-              <li><a href="${reading.link}" target="_blank" rel="noopener noreferrer">${reading.name}</a></li>
-            `).join('')}
-          </ul>
-        </div>
-      `;
-    } else {
-      lectureContainer.textContent = "There are no upcoming lectures.";
-    }
-
-    // Filter and display upcoming assignments
-    const upcomingAssignments = filterUpcomingEvents(eventData.assignments, 'due');
-    const assignmentContainer = document.querySelector('.assignment-item');
-    if (upcomingAssignments.length > 0) {
-      assignmentContainer.innerHTML = `
-        <strong>Title:</strong> ${upcomingAssignments[0].title}<br />
-        <strong>Description:</strong> ${upcomingAssignments[0].description}<br />
-        <strong>Due Date:</strong> ${new Date(upcomingAssignments[0].due).toLocaleDateString()}
-      `;
-    } else {
-      assignmentContainer.textContent = "No assignments are due soon.";
-    }
-
-    // Filter and display upcoming exams
-    const upcomingExams = filterUpcomingEvents(eventData.exams, 'date');
-    const examContainer = document.querySelector('.exam-item');
-    if (upcomingExams.length > 0) {
-      examContainer.innerHTML = `
-        The next exam is on: ${new Date(upcomingExams[0].date).toLocaleDateString()}.
-      `;
-    } else {
-      examContainer.textContent = "No upcoming exams scheduled.";
-    }
-  });
-</script>
+<!-- Pass data to the React component -->
+<EventCards allEvents={allEvents} client:load />

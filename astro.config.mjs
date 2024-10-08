@@ -1,6 +1,7 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import tailwind from "@astrojs/tailwind";
+import react from "@astrojs/react"; // React Integration
 
 // https://astro.build/config
 export default defineConfig({
@@ -67,5 +68,6 @@ export default defineConfig({
       ],
       customCss: ["/src/overrides.css"],
     }),
+    react(),
   ],
 });
