@@ -133,14 +133,16 @@ console.log("Filtered Upcoming Exams:", upcomingExams); // Debugging output
 
 <!-- Client-side script to filter past events and update content dynamically -->
 <script>
-  console.log('Client-side script running'); // Debugging log
   document.addEventListener('DOMContentLoaded', () => {
+    console.log('Client-side script running'); // Debugging log
     const currentDate = new Date();
 
     // Helper function to update upcoming items
     const updateUpcomingItems = (selector, message, filterFn) => {
       const elements = document.querySelectorAll(selector);
       const upcomingItems = Array.from(elements).filter(filterFn);
+      
+      console.log(`Upcoming Items for ${selector}:`, upcomingItems); // Log upcoming items
       
       if (upcomingItems.length === 0) {
         // Show message if no upcoming items
@@ -172,3 +174,4 @@ console.log("Filtered Upcoming Exams:", upcomingExams); // Debugging output
     });
   });
 </script>
+
