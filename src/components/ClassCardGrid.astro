@@ -3,7 +3,7 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 import { localizeTime, formatTime } from "../utils";
 import { getCollection } from "astro:content";
 
-// Fetching lectures, exams, and assignments statically (as before)
+// Fetching lectures, exams, and assignments statically
 const lectures = (await getCollection("docs", (entry) => entry.id.startsWith("lecture"))).map(entry => ({
   slug: entry.slug,
   type: "lecture",
@@ -36,7 +36,6 @@ const assignments = (await getCollection("docs", (entry) => entry.id.startsWith(
 // Static sorting of upcoming events based on the current date
 const currentDate = new Date();  // Capture the current date once
 
-// Use direct comparison of Date objects
 const upcomingLectures = lectures.filter(lecture => new Date(lecture.date) > currentDate)
                                  .sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -119,38 +118,32 @@ const upcomingExams = exams.filter(exam => new Date(exam.date) > currentDate)
   document.addEventListener('DOMContentLoaded', () => {
     const currentDate = new Date();
 
-    // Helper function to update upcoming items
     const updateUpcomingItems = (selector, message, filterFn) => {
       const elements = document.querySelectorAll(selector);
       const upcomingItems = Array.from(elements).filter(filterFn);
-      
+
       if (upcomingItems.length === 0) {
-        // Show message if no upcoming items
-        elements[0].innerHTML = message;
+        elements.forEach(el => el.innerHTML = message);
       } else {
-        // Only display the first upcoming item
         elements.forEach((item, index) => {
           if (index > 0) item.style.display = 'none'; // Hide other items
         });
       }
     };
 
-    // Filter and show only upcoming lectures
     updateUpcomingItems('.lecture-item', 'There are no upcoming lectures.', (lecture) => {
       const lectureDate = new Date(lecture.dataset.date);
-      return lectureDate >= currentDate;
+      return lectureDate > currentDate;
     });
 
-    // Filter and show only upcoming assignments
     updateUpcomingItems('.assignment-item', 'No assignments are due soon.', (assignment) => {
       const assignmentDate = new Date(assignment.dataset.date);
-      return assignmentDate >= currentDate;
+      return assignmentDate > currentDate;
     });
 
-    // Filter and show only upcoming exams
     updateUpcomingItems('.exam-item', 'No upcoming exams scheduled.', (exam) => {
       const examDate = new Date(exam.dataset.date);
-      return examDate >= currentDate;
+      return examDate > currentDate;
     });
   });
 </script>
