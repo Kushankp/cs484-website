@@ -3,65 +3,46 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 import { localizeTime, formatTime } from "../utils";
 import { getCollection } from "astro:content";
 
-// Fetching lectures, exams, and assignments statically (as before)
-const lectures = (await getCollection("docs", (entry) => entry.id.startsWith("lecture"))).map(entry => {
-  const date = localizeTime(entry.data.date);
-  console.log("Lecture Date:", date); // Log each lecture date
-  return {
+const lectures = (await getCollection("docs", (entry) => entry.id.startsWith("lecture"))).map(entry => ({
+  slug: entry.slug,
+  type: "lecture",
+  title: entry.data.title,
+  date: localizeTime(entry.data.date), // Convert the date here
+  readings: entry.data.readings,
+  notes: entry.data.notes,
+}));
+
+const exams = (await getCollection("exams")).map(entry => ({
+  type: "exam",
+  title: entry.data.title,
+  date: localizeTime(entry.data.date), // Convert the date here
+  content: entry.data.content,
+  notes: entry.data.notes,
+}));
+
+const assignments = (await getCollection("docs", (entry) => entry.id.startsWith("homework"))).flatMap(entry => [
+  {
     slug: entry.slug,
-    type: "lecture",
+    type: "homework release",
     title: entry.data.title,
-    date,  // Use the parsed Date object
-    readings: entry.data.readings,
+    description: entry.data.description,
+    release: localizeTime(entry.data.release), // Convert the date here
+    due: localizeTime(entry.data.due), // Convert the date here
     notes: entry.data.notes,
-  };
-});
-
-const exams = (await getCollection("exams")).map(entry => {
-  const date = localizeTime(entry.data.date);
-  console.log("Exam Date:", date); // Log each exam date
-  return {
-    type: "exam",
-    title: entry.data.title,
-    date,  // Use the parsed Date object
-    content: entry.data.content,
-    notes: entry.data.notes,
-  };
-});
-
-const assignments = (await getCollection("docs", (entry) => entry.id.startsWith("homework"))).flatMap(entry => {
-  const releaseDate = localizeTime(entry.data.release);
-  const dueDate = localizeTime(entry.data.due);
-  console.log("Assignment Release Date:", releaseDate); // Log each assignment release date
-  console.log("Assignment Due Date:", dueDate); // Log each assignment due date
-  return [
-    {
-      slug: entry.slug,
-      type: "homework release",
-      title: entry.data.title,
-      description: entry.data.description,
-      release: releaseDate,  // Use the parsed Date object
-      due: dueDate,  // Use the parsed Date object
-      notes: entry.data.notes,
-    },
-  ];
-});
+  },
+]);
 
 // Static sorting of upcoming events based on the current date
-const currentDate = new Date();  // Capture the current date once
+const currentDate = new Date(); // Capture the current date once
 
-// Use direct comparison of Date objects
 const upcomingLectures = lectures.filter(lecture => new Date(lecture.date) > currentDate)
                                  .sort((a, b) => new Date(a.date) - new Date(b.date));
-console.log("Filtered Upcoming Lectures:", upcomingLectures); // Debugging output
 
 const upcomingAssignments = assignments.filter(assignment => new Date(assignment.due) > currentDate)
                                        .sort((a, b) => new Date(a.due) - new Date(b.due));
-console.log("Filtered Upcoming Assignments:", upcomingAssignments); // Debugging output
 
 const upcomingExams = exams.filter(exam => new Date(exam.date) > currentDate)
                            .sort((a, b) => new Date(a.date) - new Date(b.date));
-console.log("Filtered Upcoming Exams:", upcomingExams); // Debugging output
 ---
 
 <CardGrid>
@@ -80,7 +61,7 @@ console.log("Filtered Upcoming Exams:", upcomingExams); // Debugging output
                   <a href={reading.link} target="_blank" rel="noopener noreferrer">
                     {reading.name}
                   </a>
-                  {reading.optional && " (Optional)"}
+                  {reading.grad_only && " (Graduate Only)"}
                 </li>
               ))}
             </ul>
@@ -133,22 +114,24 @@ console.log("Filtered Upcoming Exams:", upcomingExams); // Debugging output
 
 <!-- Client-side script to filter past events and update content dynamically -->
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('Client-side script running'); // Debugging log
+  document.addEventListener("DOMContentLoaded", () => {
+    console.log("Client-side script running");
     const currentDate = new Date();
 
     // Helper function to update upcoming items
     const updateUpcomingItems = (selector, message, filterFn) => {
       const elements = document.querySelectorAll(selector);
       const upcomingItems = Array.from(elements).filter(filterFn);
+      console.log(`Upcoming Items for ${selector}:`, upcomingItems);
       
-      console.log(`Upcoming Items for ${selector}:`, upcomingItems); // Log upcoming items
-      
+      // Log each item's date for better debugging
+      elements.forEach(item => {
+        console.log(`Item date: ${item.dataset.date}`);
+      });
+
       if (upcomingItems.length === 0) {
-        // Show message if no upcoming items
         elements[0].innerHTML = message;
       } else {
-        // Only display the first upcoming item
         elements.forEach((item, index) => {
           if (index > 0) item.style.display = 'none'; // Hide other items
         });
@@ -156,22 +139,12 @@ console.log("Filtered Upcoming Exams:", upcomingExams); // Debugging output
     };
 
     // Filter and show only upcoming lectures
-    updateUpcomingItems('.lecture-item', 'There are no upcoming lectures.', (lecture) => {
-      const lectureDate = new Date(lecture.dataset.date);
-      return lectureDate >= currentDate;
-    });
+    updateUpcomingItems('.lecture-item', 'There are no upcoming lectures.', lecture => new Date(lecture.dataset.date) >= currentDate);
 
     // Filter and show only upcoming assignments
-    updateUpcomingItems('.assignment-item', 'No assignments are due soon.', (assignment) => {
-      const assignmentDate = new Date(assignment.dataset.date);
-      return assignmentDate >= currentDate;
-    });
+    updateUpcomingItems('.assignment-item', 'No assignments are due soon.', assignment => new Date(assignment.dataset.date) >= currentDate);
 
     // Filter and show only upcoming exams
-    updateUpcomingItems('.exam-item', 'No upcoming exams scheduled.', (exam) => {
-      const examDate = new Date(exam.dataset.date);
-      return examDate >= currentDate;
-    });
+    updateUpcomingItems('.exam-item', 'No upcoming exams scheduled.', exam => new Date(exam.dataset.date) >= currentDate);
   });
 </script>
-
