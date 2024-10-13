@@ -113,6 +113,7 @@ const upcomingExams = exams.filter(exam => new Date(exam.date) > currentDate)
 </CardGrid>
 
 <!-- Client-side script to filter past events and update content dynamically -->
+// Client-side script to filter past events and update content dynamically
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     console.log("Client-side script running");
@@ -138,13 +139,28 @@ const upcomingExams = exams.filter(exam => new Date(exam.date) > currentDate)
       }
     };
 
+    // Log current date for verification
+    console.log("Current Date:", currentDate);
+
     // Filter and show only upcoming lectures
-    updateUpcomingItems('.lecture-item', 'There are no upcoming lectures.', lecture => new Date(lecture.dataset.date) >= currentDate);
+    updateUpcomingItems('.lecture-item', 'There are no upcoming lectures.', lecture => {
+      const lectureDate = new Date(lecture.dataset.date);
+      console.log(`Lecture Date: ${lectureDate}`);
+      return lectureDate >= currentDate;
+    });
 
     // Filter and show only upcoming assignments
-    updateUpcomingItems('.assignment-item', 'No assignments are due soon.', assignment => new Date(assignment.dataset.date) >= currentDate);
+    updateUpcomingItems('.assignment-item', 'No assignments are due soon.', assignment => {
+      const assignmentDate = new Date(assignment.dataset.date);
+      console.log(`Assignment Date: ${assignmentDate}`);
+      return assignmentDate >= currentDate;
+    });
 
     // Filter and show only upcoming exams
-    updateUpcomingItems('.exam-item', 'No upcoming exams scheduled.', exam => new Date(exam.dataset.date) >= currentDate);
+    updateUpcomingItems('.exam-item', 'No upcoming exams scheduled.', exam => {
+      const examDate = new Date(exam.dataset.date);
+      console.log(`Exam Date: ${examDate}`);
+      return examDate >= currentDate;
+    });
   });
 </script>
